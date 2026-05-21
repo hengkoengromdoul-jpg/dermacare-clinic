@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Portal | DermaCare</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --primary-color: #2766b9;
+            --bg-light: #f8fafc;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-light);
+            color: #1e293b;
+        }
+
+        .top-nav {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+        }
+
+        .brand-text {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card { border-left: 5px solid var(--primary-color); }
+
+        .form-control, .form-select {
+            border-radius: 12px;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            background: #f1f5f9;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 12px;
+            padding: 0.8rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #3383df;
+            transform: translateY(-2px);
+        }
+
+        .table thead th {
+            background-color: #f1f5f9;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            border: none;
+            padding: 1rem;
+        }
+
+        .table tbody td {
+            padding: 1.2rem 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-available { background: #dcfce7; color: #236fea; }
+        .status-booked    { background: #fee2e2; color: #abc9f1; }
+        .status-completed { background: #dbeafe; color: #1e40af; }
+        .status-cancelled { background: #f3f4f6; color: #6b7280; }
+        .status-pending   { background: #fef3c7; color: #4a7ae9; }
+        .pay-paid         { background: #dcfce7; color: #152c80; }
+        .pay-pending      { background: #fef3c7; color: #236bf1; }
+        .pay-none         { background: #f3f4f6; color: #05173b; }
+
+        .patient-avatar {
+            width: 40px;
+            height: 40px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            color: var(--primary-color);
+        }
+
+        .logout-btn {
+            color: #4472ef;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .logout-btn:hover { color: #350999; }
+
+        .icon-btn {
+            border: none;
+            background: transparent;
+            color: #64748b;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+        }
+        .icon-btn:hover { background: #f1f5f9; color: var(--primary-color); }
+        .icon-btn.danger:hover { background: #fee2e2; color: #4426dc; }
+
+        .medicine-row {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-nav d-flex justify-content-between align-items-center mb-5">
+        <div class="brand-text"><i class="bi bi-shield-plus me-2"></i>DermaCare <span style="color: #64748b; font-weight: 400;">Portal</span></div>
+        <div class="d-flex align-items-center">
+            <div class="text-end me-4">
+                <div class="fw-bold mb-0">Dr. {{ session.get('name') }}</div>
+                <div class="text-muted small">Specialist Dermatologist</div>
+            </div>
+            <a href="/logout" class="logout-btn"><i class="bi bi-box-arrow-right me-1"></i> Logout</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- flash messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="alert alert-info border-0 shadow-sm rounded-4 mb-3">
+                        <i class="bi bi-info-circle me-1"></i> {{ msg }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row g-4">
+
+            <!-- LEFT COLUMN: schedule management -->
+            <div class="col-lg-4">
+                <div class="glass-card mb-4 stat-card">
+                    <h5 class="fw-bold mb-4"><i class="bi bi-plus-circle-dotted me-2 text-primary"></i>Add New Slot</h5>
+                    <form action="/add_schedule" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted fw-bold">Select Date</label>
+                            <input type="date" name="available_date" class="form-control" required>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-label small text-muted fw-bold">Start Time</label>
+                                <input type="time" name="start_time" class="form-control" required>
+                            </div>
+                            <div class="col">
+                                <label class="form-label small text-muted fw-bold">End Time</label>
+                                <input type="time" name="end_time" class="form-control" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-2">Publish Availability</button>
+                    </form>
+                </div>
+
+                <div class="glass-card">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-2 text-primary"></i>Your Current Slots</h6>
+                    <div style="max-height: 350px; overflow-y: auto;">
+                        {% for s in schedules %}
+                        <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                            <div>
+                                <div class="small fw-bold">{{ s.available_date }}</div>
+                                <div class="text-muted" style="font-size: 0.8rem;">{{ s.start_time }} - {{ s.end_time }}</div>
+                            </div>
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="status-badge status-{{ s.status }}">{{ s.status }}</span>
+                                {% if s.status == 'available' %}
+                                    <a href="{{ url_for('delete_schedule', schedule_id=s.schedule_id) }}"
+                                       class="icon-btn danger"
+                                       onclick="return confirm('Delete this slot?');"
+                                       title="Delete slot">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                            <div class="text-center text-muted py-3 small">No slots yet. Add one above.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: bookings -->
+            <div class="col-lg-8">
+                <div class="glass-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-people me-2 text-primary"></i>Upcoming Consultations</h5>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2" style="background-color: #f0fdfa;">{{ bookings|length }} Patients</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Schedule</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for b in bookings %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="patient-avatar"><i class="bi bi-person-fill"></i></div>
+                                            <div>
+                                                <div class="fw-bold">{{ b.patient_name }}</div>
+                                                <div class="text-muted small">{{ b.phone }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold small">{{ b.appointment_date_time }}</div>
+                                        <div class="text-muted small">{{ b.booking_type }}</div>
+                                    </td>
+                                    <td>
+                                        {% if b.payment_status == 'paid' %}
+                                            <span class="status-badge pay-paid">Paid</span>
+                                        {% elif b.payment_status == 'pending' %}
+                                            <span class="status-badge pay-pending">Pending</span>
+                                        {% else %}
+                                            <span class="status-badge pay-none">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ b.status }}">{{ b.status }}</span>
+                                    </td>
+                                    <td>
+                                        {% if b.status == 'confirmed' or b.status == 'pending' %}
+                                            <button class="btn btn-sm btn-primary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#rxModal{{ b.appointment_id }}">
+                                                <i class="bi bi-pencil-square me-1"></i>Complete
+                                            </button>
+                                        {% else %}
+                                            <span class="text-muted small">—</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <i class="bi bi-calendar-x display-4 d-block mb-3 opacity-25"></i>
+                                        No appointments found.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- PRESCRIPTION MODALS (one per booking) -->
+    {% for b in bookings %}
+        {% if b.status == 'confirmed' or b.status == 'pending' %}
+        <div class="modal fade" id="rxModal{{ b.appointment_id }}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content rounded-4 border-0">
+                    <form action="{{ url_for('complete_appointment', appointment_id=b.appointment_id) }}" method="POST">
+                        <div class="modal-header border-0 pb-0">
+                            <div>
+                                <h5 class="modal-title fw-bold"><i class="bi bi-file-medical text-primary me-2"></i>Complete Consultation</h5>
+                                <p class="text-muted small mb-0">Patient: <strong>{{ b.patient_name }}</strong> · {{ b.appointment_date_time }}</p>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+
+                            <div class="mb-3">
+                                <label class="form-label small text-muted fw-bold">Diagnosis</label>
+                                <input type="text" name="diagnosis" class="form-control" placeholder="e.g., Mild acne vulgaris" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small text-muted fw-bold">Doctor's Notes</label>
+                                <textarea name="notes" class="form-control" rows="2" placeholder="Treatment plan, follow-up notes..."></textarea>
+                            </div>
+
+                            <hr>
+                            <h6 class="fw-bold mb-3"><i class="bi bi-capsule-pill text-primary me-1"></i>Prescribed Medicines</h6>
+
+                            <div id="medList{{ b.appointment_id }}">
+                                <div class="medicine-row">
+                                    <div class="row g-2">
+                                        <div class="col-md-4"><input type="text" name="med_name[]" class="form-control form-control-sm" placeholder="Medicine name" required></div>
+                                        <div class="col-md-3"><input type="text" name="med_dosage[]" class="form-control form-control-sm" placeholder="Dosage e.g. 5mg"></div>
+                                        <div class="col-md-2"><input type="number" name="med_qty[]" class="form-control form-control-sm" placeholder="Qty" min="1" value="1"></div>
+                                        <div class="col-md-3"><input type="text" name="med_instr[]" class="form-control form-control-sm" placeholder="Instructions"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2"
+                                    onclick="addMedRow({{ b.appointment_id }})">
+                                <i class="bi bi-plus-circle me-1"></i>Add Another Medicine
+                            </button>
+                        </div>
+
+                        <div class="modal-footer border-0">
+                            <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary rounded-3">
+                                <i class="bi bi-check-circle me-1"></i>Save & Mark Completed
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // adds another medicine row inside the prescription modal
+        function addMedRow(appointmentId) {
+            const list = document.getElementById('medList' + appointmentId);
+            const row = document.createElement('div');
+            row.className = 'medicine-row';
+            row.innerHTML = `
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-4"><input type="text" name="med_name[]" class="form-control form-control-sm" placeholder="Medicine name"></div>
+                    <div class="col-md-3"><input type="text" name="med_dosage[]" class="form-control form-control-sm" placeholder="Dosage"></div>
+                    <div class="col-md-2"><input type="number" name="med_qty[]" class="form-control form-control-sm" min="1" value="1"></div>
+                    <div class="col-md-2"><input type="text" name="med_instr[]" class="form-control form-control-sm" placeholder="Instructions"></div>
+                    <div class="col-md-1 text-end">
+                        <button type="button" class="icon-btn danger" onclick="this.closest('.medicine-row').remove()">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                </div>`;
+            list.appendChild(row);
+        }
+    </script>
+</body>
+</html>

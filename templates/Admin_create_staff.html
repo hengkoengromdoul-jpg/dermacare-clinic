@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Staff - DermaCare Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body { background: #f4f7fb; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .staff-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 35px;
+            max-width: 700px;
+            margin: 40px auto;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.04);
+        }
+        .role-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .role-tab {
+            flex: 1;
+            padding: 16px;
+            border-radius: 14px;
+            background: #f1f5f9;
+            border: 2px solid transparent;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+        .role-tab.active {
+            background: #e6f1fb;
+            border-color: #0f63b6;
+            color: #0f63b6;
+        }
+        .role-tab i { display: block; font-size: 1.8rem; margin-bottom: 6px; }
+        .form-control, .form-select {
+            border-radius: 12px;
+            padding: 12px 15px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-light bg-white shadow-sm px-4 py-3">
+    <div class="container">
+        <span class="navbar-brand fw-bold text-primary fs-3">
+            <i class="bi bi-shield-plus me-2"></i>DermaCare · Admin
+        </span>
+        <div>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary btn-sm rounded-pill me-2">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm rounded-pill">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="staff-card">
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-person-plus-fill text-primary me-2"></i>Create Staff Account
+        </h2>
+        <p class="text-muted">Only the admin can create doctor and pharmacist accounts.</p>
+
+        {% with messages = get_flashed_messages() %}
+            {% for msg in messages %}
+                <div class="alert alert-info border-0 rounded-4 mt-3">
+                    <i class="bi bi-info-circle me-1"></i> {{ msg }}
+                </div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('admin_create_staff') }}" autocomplete="off" class="mt-4">
+
+            <!-- role selector tabs -->
+            <div class="role-tabs">
+                <label class="role-tab active" id="tab-doctor">
+                    <input type="radio" name="role" value="doctor" checked hidden>
+                    <i class="bi bi-person-badge"></i>
+                    Doctor
+                </label>
+                <label class="role-tab" id="tab-pharmacist">
+                    <input type="radio" name="role" value="pharmacist" hidden>
+                    <i class="bi bi-capsule-pill"></i>
+                    Pharmacist
+                </label>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label small text-muted fw-bold">Full Name</label>
+                    <input type="text" name="name" class="form-control" placeholder="e.g. Dr. Sok Somnang" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted fw-bold">Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="somnang@dermacare.com" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted fw-bold">Temporary Password</label>
+                    <input type="text" name="password" class="form-control" placeholder="they can change it later" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted fw-bold">Phone</label>
+                    <input type="text" name="phone" class="form-control" placeholder="012-345-678" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted fw-bold">Gender</label>
+                    <select name="gender" class="form-select" required>
+                        <option value="" disabled selected>Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted fw-bold">Nationality</label>
+                    <input type="text" name="national" class="form-control" value="Cambodian">
+                </div>
+
+                <!-- doctor-only fields -->
+                <div class="col-12" id="doctor-only">
+                    <label class="form-label small text-muted fw-bold">Specialization (doctor only)</label>
+                    <input type="text" name="specialization" class="form-control"
+                           placeholder="e.g. Senior Dermatologist, Laser & Aesthetics, Pediatric Dermatology">
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label small text-muted fw-bold">Profile / About</label>
+                    <textarea name="profile" class="form-control" rows="2"
+                              placeholder="Short bio shown on the team page"></textarea>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 rounded-pill mt-4 fw-bold py-3">
+                <i class="bi bi-check-circle me-1"></i> Create Account
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const tabDoctor = document.getElementById('tab-doctor');
+    const tabPharmacist = document.getElementById('tab-pharmacist');
+    const doctorOnly = document.getElementById('doctor-only');
+
+    tabDoctor.addEventListener('click', () => {
+        tabDoctor.classList.add('active');
+        tabPharmacist.classList.remove('active');
+        tabDoctor.querySelector('input').checked = true;
+        doctorOnly.style.display = 'block';
+    });
+
+    tabPharmacist.addEventListener('click', () => {
+        tabPharmacist.classList.add('active');
+        tabDoctor.classList.remove('active');
+        tabPharmacist.querySelector('input').checked = true;
+        doctorOnly.style.display = 'none';
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,255 @@
+/* GLOBAL STYLES  */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/*  NAVBAR & LOGO  */
+.brand-logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    font-size: 42px;
+    font-weight: 900;
+    color: #3498db;
+    padding-left: 10px; 
+}
+
+.logo-img {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    margin-right: 15px;
+}
+.brand-logo span {
+    background: linear-gradient(45deg, #1380e7, #6fa2e4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* --- HERO SECTION --- */
+.hero {
+    height: 80vh;
+    background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), 
+                url('background.png') no-repeat center center/cover;
+    color: white;
+    display: flex;
+    align-items: center;
+}
+
+.hero h1, .hero h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+.hero p.lead {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* --- FEATURES & SERVICES --- */
+.feature-box {
+    padding: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.service-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 2px solid #3498db;
+    display: block;
+    margin: 0 auto 15px auto;
+}
+
+/* --- CONTACT & PILL BUTTONS --- */
+.btn-contact-pill-sm {
+    background-color: #3498db;
+    color: white !important;
+    border-radius: 50px;
+    padding: 10px 25px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-contact-pill-sm:hover {
+    background-color: #589bc7;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.contact-box {
+    background-color: #ffffff;
+    border: 2px solid #eef2f7;
+    padding: 20px;
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+.contact-box:hover {
+    border-color: #3498db;
+    background-color: #f8fbff;
+}
+
+/* --- LOCATIONS --- */
+.location-container {
+    padding: 20px;
+    border-radius: 10px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+    cursor: pointer;
+}
+
+.location-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    background-color: #9dd0fa !important;
+}
+
+/* --- FOOTER / CTA --- */
+.cta {
+    background: #2c3e50;
+    color: white;
+    padding: 60px;
+    text-align: center;
+}
+
+.hero-text-box {
+    margin-top: -60px; 
+    position: relative;
+    z-index: 2; 
+}
+
+.btn-outline-primary.rounded-pill {
+    border-radius: 50px !important;
+    padding: 10px 25px;            
+    border-width: 2px;  
+    transition: all 0.3s ease;  
+}
+
+/* Registration Board Styling */
+.register-bg {
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.register-wrapper {
+    width: 100%;
+    padding: 20px;
+}
+
+.register-card {
+    background: #ffffff;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px;
+    border-radius: 25px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+    border: 1px solid rgba(52, 152, 219, 0.1);
+}
+
+.brand-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.clinic-title {
+    color: #3498db;
+    font-weight: 900;
+    font-size: 2.5rem;
+    margin-bottom: 5px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.full-width {
+    grid-column: span 2;
+}
+
+.register-form input, .register-form select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #f1f4f8;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.register-form input:focus {
+    border-color: #3498db;
+}
+
+.btn-register {
+    grid-column: span 2;
+    margin-top: 20px;
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 50px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+    width: 100%;
+}
+
+.btn-register:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #666;
+}
+
+.login-link a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* Hero Section Styling */
+.hero {
+    position: relative;
+    overflow: hidden;
+    color: white;
+}
+
+/* Glassmorphism Effect for Stats Box */
+.glass-box {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.glass-box:hover {
+    transform: translateY(-5px);
+}

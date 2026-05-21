@@ -1,0 +1,31 @@
+# secrets — NEVER commit
+.env
+.env.local
+.env.production
+
+# python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# virtual environments
+venv/
+env/
+.venv/
+
+# editor stuff
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+
+# backup files
+*.bak
+*.backup
+*.mwb
+*.mwb.bak
+Project.mwb*

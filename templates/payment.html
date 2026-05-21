@@ -1,0 +1,55 @@
+{% extends "base.html" if false else "index.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Payment - DermaCare</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="register-bg">
+<div class="register-wrapper">
+    <div class="register-card" style="max-width:500px;">
+        <div class="brand-header">
+            <h2 class="clinic-title">Complete Payment</h2>
+            <p>Booking fee for your consultation</p>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+          {% for m in messages %}<div class="alert alert-info">{{ m }}</div>{% endfor %}
+        {% endwith %}
+
+        <div class="alert alert-light border">
+            <strong>Doctor:</strong> {{ appt.doctor_name }}<br>
+            <strong>Date & Time:</strong> {{ appt.appointment_date_time }}<br>
+            <strong>Amount Due:</strong>
+            <span class="h4 text-primary">${{ "%.2f"|format(appt.booking_fee) }}</span>
+        </div>
+
+        {% if appt.payment_status == 'paid' %}
+            <div class="alert alert-success">Already paid. Thank you!</div>
+            <a href="{{ url_for('patient_dashboard') }}" class="btn btn-register">Back to Dashboard</a>
+        {% else %}
+        <form method="POST" class="register-form">
+            <label class="mb-2 fw-bold">Payment Method</label>
+            <select name="method" class="full-width" required>
+                <option value="cash">Cash on Arrival</option>
+                <option value="aba">ABA Pay</option>
+                <option value="bakong">Bakong</option>
+                <option value="wing">Wing</option>
+                <option value="card">Credit / Debit Card</option>
+            </select>
+
+            <input type="text" name="transaction_ref" placeholder="Transaction reference (optional)" class="full-width mt-3">
+
+            <button type="submit" class="btn-register">Pay $18.00 Now</button>
+        </form>
+        {% endif %}
+
+        <p class="login-link">
+            <a href="{{ url_for('patient_dashboard') }}">← Back to Dashboard</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

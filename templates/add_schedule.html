@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Schedule Block — DermaCare</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .form-card {
+            background: rgb(126, 161, 237);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .badge-step {
+            background: rgba(43, 86, 245, 0.1);
+            color: #2b56f5;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="d-flex align-items-center py-5">
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            
+            <div class="text-center mb-4">
+                <a href="/doctor_dashboard" class="btn btn-sm btn-light rounded-pill border px-3 text-secondary mb-3">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Doctor Lounge
+                </a>
+                <h2 class="fw-bold text-dark m-0">Publish Availability Slot</h2>
+                <p class="text-muted mt-1">Setup your shift blocks so patients can book online skin evaluations</p>
+            </div>
+
+            <div class="form-card card p-4 p-md-5">
+                <form action="/add_schedule" method="POST">
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small d-flex align-items-center justify-content-between">
+                            <span>Available Date Target</span>
+                            <span class="badge badge-step rounded-pill px-2.5 py-1 small">Step 1</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-calendar-event"></i></span>
+                            <input type="date" name="available_date" class="form-control bg-light border-start-0 ps-0" required>
+                        </div>
+                        <div class="form-text text-muted small">Select the specific calendar day you will be available for consultations.</div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bold text-dark small d-flex align-items-center justify-content-between">
+                                <span>Shift Shift Start</span>
+                                <span class="badge badge-step rounded-pill px-2.5 py-1 small">Step 2</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-clock"></i></span>
+                                <input type="time" name="start_time" class="form-control bg-light border-start-0 ps-0" placeholder="09:00 AM" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bold text-dark small d-flex align-items-center justify-content-between">
+                                <span>Shift Shift End</span>
+                                <span class="badge badge-step rounded-pill px-2.5 py-1 small">Step 3</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-clock-history"></i></span>
+                                <input type="time" name="end_time" class="form-control bg-light border-start-0 ps-0" placeholder="12:00 PM" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info border-0 rounded-4 p-3 d-flex align-items-start gap-2.5 mb-4">
+                        <i class="bi bi-info-circle-fill text-primary fs-5 mt-0.5"></i>
+                        <div class="small text-dark-50">
+                            By clicking publish, this block will immediately reflect on the public dashboard with an <strong>'available'</strong> flag status for open matching registrations.
+                        </div>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <a href="/doctor_dashboard" class="btn btn-light border w-100 rounded-pill py-2.5 fw-bold text-muted">Discard</a>
+                        </div>
+                        <div class="col-6">
+                            <button type="submit" class="btn btn-primary w-100 rounded-pill py-2.5 fw-bold shadow-sm">Publish Block</button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

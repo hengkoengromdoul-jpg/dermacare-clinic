@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Pharmacist Dashboard - DermaCare</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="background:#c4d1e3;">
+<nav class="navbar navbar-light bg-white shadow-sm px-4">
+    <span class="navbar-brand fw-bold text-primary">DermaCare · Pharmacy</span>
+    <div>
+        <span class="me-3">Hi, {{ session['name'] }}</span>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Logout</a>
+    </div>
+</nav>
+
+<div class="container py-4">
+    {% with messages = get_flashed_messages() %}
+      {% for m in messages %}<div class="alert alert-info">{{ m }}</div>{% endfor %}
+    {% endwith %}
+
+    <h3 class="mb-3">Prescriptions to Dispense</h3>
+
+    {% for pr in prescriptions %}
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h6 class="mb-1">#{{ pr.prescription_id }} · Patient: {{ pr.patient_name }} ({{ pr.phone }})</h6>
+                    <small class="text-muted">By Dr. {{ pr.doctor_name }} on {{ pr.created_at }}</small>
+                </div>
+                <div>
+                    {% if pr.status == 'dispensed' %}
+                        <span class="badge bg-success">Dispensed</span>
+                    {% else %}
+                        <span class="badge bg-warning">Pending</span>
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+            <p><strong>Diagnosis:</strong> {{ pr.diagnosis or '-' }}</p>
+            <p><strong>Notes:</strong> {{ pr.notes or '-' }}</p>
+
+            <table class="table table-sm">
+                <thead><tr><th>Medicine</th><th>Dosage</th><th>Qty</th><th>Instructions</th></tr></thead>
+                <tbody>
+                {% for m in pr.medicines %}
+                <tr>
+                    <td>{{ m.name }}</td><td>{{ m.dosage }}</td>
+                    <td>{{ m.quantity }}</td><td>{{ m.instructions }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            {% if pr.status != 'dispensed' %}
+            <form method="POST" action="{{ url_for('dispense', prescription_id=pr.prescription_id) }}">
+                <button class="btn btn-success btn-sm">Mark as Dispensed</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+        <p class="text-muted">No prescriptions yet.</p>
+    {% endfor %}
+</div>
+</body>
+</html>

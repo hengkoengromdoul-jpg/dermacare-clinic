@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Lounge — DermaCare</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #2b56f5 0%, #1034a6 100%);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+        }
+        body {
+            background: linear-gradient(135deg, #f4f7fd 0%, #e9effd 100%);
+            min-height: 100vh;
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+        .custom-nav {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .welcome-hero {
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(43, 86, 245, 0.15);
+            margin-bottom: 40px;
+        }
+        .glass-panel {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.7);
+            padding: 25px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.02);
+        }
+        .clinic-card {
+            background: white;
+            border-radius: 18px;
+            border-left: 5px solid #2b56f5;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .clinic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.06);
+        }
+        .timeline-item {
+            position: relative;
+            padding-left: 25px;
+            border-left: 2px dashed #cbd5e1;
+            padding-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 4px;
+            width: 10px;
+            height: 10px;
+            background: #2b56f5;
+            border-radius: 50%;
+        }
+        /* new styles for the booking + prescription cards */
+        .booking-row {
+            background: white;
+            border-radius: 16px;
+            border-left: 4px solid #6c757d;
+            transition: all 0.2s ease;
+        }
+        .booking-row.paid    { border-left-color: #16a34a; }
+        .booking-row.pending { border-left-color: #f59e0b; }
+        .booking-row:hover { transform: translateX(3px); }
+
+        .section-tabs .nav-link {
+            color: #64748b;
+            font-weight: 600;
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 12px 20px;
+            border-radius: 0;
+        }
+        .section-tabs .nav-link.active {
+            color: #2b56f5;
+            background: transparent;
+            border-bottom-color: #2b56f5;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar custom-nav py-3 sticky-top">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center fw-bold text-primary fs-3" href="#">
+            <i class="bi bi-shield-plus me-2"></i>DermaCare
+        </a>
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center bg-light rounded-pill px-3 py-1.5 border">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-2" style="width: 32px; height: 32px;">
+                    {{ session.get('name', 'P')[0]|upper }}
+                </div>
+                <span class="fw-semibold text-dark small">{{ session.get('name', 'User') }}</span>
+            </div>
+            <a href="/logout" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="alert alert-warning border-0 shadow-sm rounded-4 mb-4 p-3 d-flex align-items-center alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle-fill fs-4 me-2 text-warning"></i>
+                    <div class="fw-medium text-dark">{{ msg }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="welcome-hero d-flex justify-content-between align-items-center flex-wrap gap-4">
+        <div>
+            <span class="badge bg-white bg-opacity-20 text-white px-3 py-1.5 rounded-pill mb-3 fw-bold text-uppercase tracking-wider small">Skin Care Portal</span>
+            <h1 class="display-5 fw-bold m-0">Welcome back, {{ session.get('name', 'Patient') }}! ✨</h1>
+            <p class="text-white-50 mt-2 mb-0 fs-5">Select an expert dermatologist schedule option below to book your skin evaluation.</p>
+        </div>
+        <i class="bi bi-fingerprint opacity-25" style="font-size: 5rem;"></i>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+
+            <!-- TABS: switch between Book / My Bookings / My Prescriptions -->
+            <ul class="nav section-tabs mb-4" id="patientTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-book" type="button">
+                        <i class="bi bi-calendar2-week-fill me-1"></i> Book Consultation
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-bookings" type="button">
+                        <i class="bi bi-bookmark-check-fill me-1"></i> My Bookings
+                        {% if appointments %}<span class="badge bg-primary ms-1">{{ appointments|length }}</span>{% endif %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-rx" type="button">
+                        <i class="bi bi-capsule-pill me-1"></i> Prescriptions
+                        {% if prescriptions %}<span class="badge bg-success ms-1">{{ prescriptions|length }}</span>{% endif %}
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+
+                <!-- ============ TAB 1: BOOK NEW CONSULTATION ============ -->
+                <div class="tab-pane fade show active" id="tab-book">
+                    <h4 class="fw-bold text-dark mb-4 d-flex align-items-center">
+                        <i class="bi bi-calendar2-week-fill text-primary me-2"></i>Available Dermatology Consultation Slots
+                    </h4>
+
+                    {% if schedules %}
+                        {% for row in schedules %}
+                        <div class="clinic-card card p-4 mb-3 border-0 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div>
+                                    <h5 class="fw-bold text-dark mb-1">👩‍⚕️ {{ row.doctor_name }}</h5>
+                                    <p class="text-muted small mb-3"><i class="bi bi-tag-fill text-success me-1"></i> {{ row.specialization or 'Clinical Dermatologist' }}</p>
+                                    <div class="d-flex gap-3 text-secondary small">
+                                        <span class="bg-light px-2 py-1 rounded-3"><i class="bi bi-calendar-check me-1 text-primary"></i>{{ row.available_date }}</span>
+                                        <span class="bg-light px-2 py-1 rounded-3"><i class="bi bi-clock me-1 text-primary"></i>{{ row.start_time }} - {{ row.end_time }}</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#box{{ row.schedule_id }}">
+                                    Secure Session ($18.00)
+                                </button>
+                            </div>
+
+                            <div class="collapse mt-4" id="box{{ row.schedule_id }}">
+                                <div class="p-4 rounded-4 bg-light border">
+                                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-person-lines-fill text-primary me-2"></i>Patient Intake Entry Information</h6>
+                                    <form action="/confirm_booking" method="POST">
+                                        <input type="hidden" name="schedule_id" value="{{ row.schedule_id }}">
+                                        <input type="hidden" name="doctor_id" value="{{ row.doctor_id }}">
+
+                                        <!-- section: personal info -->
+                                        <p class="text-uppercase small fw-bold text-primary mb-2 mt-1" style="letter-spacing:0.5px;">
+                                            <i class="bi bi-person-circle me-1"></i> Personal Info
+                                        </p>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted fw-bold">Full Name</label>
+                                                <input type="text" name="name" class="form-control rounded-3" value="{{ session.get('name', '') }}" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted fw-bold">Gender</label>
+                                                <select name="gender" class="form-select rounded-3" required>
+                                                    <option value="" disabled selected>Select gender</option>
+                                                    <option value="male">Male</option>
+                                                    <option value="female">Female</option>
+                                                    <option value="other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted fw-bold">Date of Birth</label>
+                                                <input type="date" name="date_of_birth" class="form-control rounded-3" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted fw-bold">Nationality</label>
+                                                <input type="text" name="national" class="form-control rounded-3" placeholder="e.g. Cambodian" required>
+                                            </div>
+                                        </div>
+
+                                        <!-- section: contact -->
+                                        <p class="text-uppercase small fw-bold text-primary mb-2 mt-4" style="letter-spacing:0.5px;">
+                                            <i class="bi bi-telephone me-1"></i> Contact
+                                        </p>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted fw-bold">Mobile Number</label>
+                                                <input type="text" name="phone" class="form-control rounded-3" placeholder="012-345-678" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted fw-bold">Email</label>
+                                                <input type="email" name="email" class="form-control rounded-3" value="{{ session.get('email', '') }}" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted fw-bold">Emergency Contact</label>
+                                                <input type="text" name="emergency_phone" class="form-control rounded-3" placeholder="e.g. Mom — 012-999-888" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted fw-bold">Short Profile / About You</label>
+                                                <input type="text" name="profile" class="form-control rounded-3" placeholder="e.g. Regular skin care patient">
+                                            </div>
+                                        </div>
+
+                                        <!-- section: address -->
+                                        <p class="text-uppercase small fw-bold text-primary mb-2 mt-4" style="letter-spacing:0.5px;">
+                                            <i class="bi bi-geo-alt me-1"></i> Address
+                                        </p>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted fw-bold">Street</label>
+                                                <input type="text" name="addr_street" class="form-control rounded-3" placeholder="St. 271" required>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label small text-muted fw-bold">City</label>
+                                                <input type="text" name="addr_city" class="form-control rounded-3" placeholder="Phnom Penh" required>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label small text-muted fw-bold">Province</label>
+                                                <input type="text" name="addr_province" class="form-control rounded-3" placeholder="Cambodia" required>
+                                            </div>
+                                        </div>
+
+                                        <!-- section: medical -->
+                                        <p class="text-uppercase small fw-bold text-primary mb-2 mt-4" style="letter-spacing:0.5px;">
+                                            <i class="bi bi-heart-pulse me-1"></i> Medical Background
+                                        </p>
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <label class="form-label small text-muted fw-bold">Clinical Case or Skin Allergy Notes</label>
+                                                <textarea name="medical_history" class="form-control rounded-3" rows="3" placeholder="Describe symptoms, allergies, past conditions (e.g., acne breakouts, rashes, dermatitis eczema flares)..."></textarea>
+                                            </div>
+                                            <div class="col-12 text-end mt-3">
+                                                <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold">Proceed to Secure Checkout →</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="glass-panel text-center p-5">
+                            <i class="bi bi-calendar-x text-muted fs-1 mb-3"></i>
+                            <p class="text-secondary fw-medium">No live consultant blocks available for selection currently.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+
+                <!-- ============ TAB 2: MY BOOKINGS ============ -->
+                <div class="tab-pane fade" id="tab-bookings">
+                    <h4 class="fw-bold text-dark mb-4 d-flex align-items-center">
+                        <i class="bi bi-bookmark-check-fill text-primary me-2"></i>My Bookings & Payment Status
+                    </h4>
+
+                    {% if appointments %}
+                        {% for a in appointments %}
+                        <div class="booking-row {{ a.payment_status or 'pending' }} p-4 mb-3 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-1">👩‍⚕️ Dr. {{ a.doctor_name }}</h6>
+                                    <div class="d-flex gap-2 flex-wrap small text-secondary mb-2">
+                                        <span class="bg-light px-2 py-1 rounded-3"><i class="bi bi-calendar2 me-1 text-primary"></i>{{ a.appointment_date_time }}</span>
+                                        <span class="bg-light px-2 py-1 rounded-3"><i class="bi bi-cash-coin me-1 text-primary"></i>${{ "%.2f"|format(a.booking_fee) }}</span>
+                                    </div>
+                                    <div class="d-flex gap-2 small">
+                                        {% if a.status == 'completed' %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% elif a.status == 'cancelled' %}
+                                            <span class="badge bg-danger">Cancelled</span>
+                                        {% else %}
+                                            <span class="badge bg-info text-dark">{{ a.status|capitalize }}</span>
+                                        {% endif %}
+
+                                        {% if a.payment_status == 'paid' %}
+                                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Paid via {{ a.payment_method }}</span>
+                                        {% elif a.payment_status == 'pending' %}
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Payment Pending</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">No Payment Record</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div>
+                                    {% if a.payment_status == 'paid' %}
+                                        <span class="text-success fw-bold"><i class="bi bi-shield-check fs-4"></i></span>
+                                    {% endif %}
+                                    {% if a.invoice_id %}
+                                        <a href="{{ url_for('view_invoice', invoice_id=a.invoice_id) }}"
+                                           class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold">
+                                            <i class="bi bi-receipt me-1"></i> View Invoice
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="glass-panel text-center p-5">
+                            <i class="bi bi-bookmark text-muted fs-1 mb-3"></i>
+                            <p class="text-secondary fw-medium">No bookings yet. Reserve a consultation slot to get started.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+
+                <!-- ============ TAB 3: MY PRESCRIPTIONS ============ -->
+                <div class="tab-pane fade" id="tab-rx">
+                    <h4 class="fw-bold text-dark mb-4 d-flex align-items-center">
+                        <i class="bi bi-capsule-pill text-primary me-2"></i>My Prescriptions
+                    </h4>
+
+                    {% if prescriptions %}
+                        {% for rx in prescriptions %}
+                        <div class="clinic-card card p-4 mb-3 border-0 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                                <h6 class="fw-bold text-dark mb-0">
+                                    <i class="bi bi-file-medical text-primary me-1"></i>
+                                    Prescription #{{ rx.prescription_id }} — by Dr. {{ rx.doctor_name }}
+                                </h6>
+                                {% if rx.status == 'dispensed' %}
+                                    <span class="badge bg-success">Dispensed</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Pending Pharmacy</span>
+                                {% endif %}
+                            </div>
+                            <p class="small text-muted mb-2"><i class="bi bi-clock-history me-1"></i>{{ rx.created_at }}</p>
+
+                            {% if rx.diagnosis %}
+                                <div class="mb-2">
+                                    <strong class="small text-dark">Diagnosis:</strong>
+                                    <span class="text-secondary small">{{ rx.diagnosis }}</span>
+                                </div>
+                            {% endif %}
+                            {% if rx.notes %}
+                                <div class="mb-2">
+                                    <strong class="small text-dark">Doctor's Notes:</strong>
+                                    <span class="text-secondary small">{{ rx.notes }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="glass-panel text-center p-5">
+                            <i class="bi bi-capsule text-muted fs-1 mb-3"></i>
+                            <p class="text-secondary fw-medium">No prescriptions yet. They'll appear here after your consultation.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+            </div><!-- /tab-content -->
+        </div>
+
+
+        <!-- RIGHT SIDEBAR: timeline pathway (kept exactly as before) -->
+        <div class="col-lg-4">
+            <div class="glass-panel sticky-lg-top" style="top: 100px;">
+                <h5 class="fw-bold text-dark mb-4 d-flex align-items-center">
+                    <i class="bi bi-activity text-danger me-2"></i>My DermaCare Pathway
+                </h5>
+                
+                <div class="timeline-item">
+                    <strong class="text-dark d-block small">Phase 1: Account Setup</strong>
+                    <span class="text-success small fw-medium"><i class="bi bi-patch-check-fill me-1"></i> Verified Active</span>
+                </div>
+                <div class="timeline-item">
+                    <strong class="text-dark d-block small">Phase 2: Consultation Booking</strong>
+                    {% if appointments %}
+                        <span class="text-success small fw-medium"><i class="bi bi-patch-check-fill me-1"></i> {{ appointments|length }} booking(s)</span>
+                    {% else %}
+                        <span class="text-muted small">Select a specialist schedule block to start treatment</span>
+                    {% endif %}
+                </div>
+                <div class="timeline-item">
+                    <strong class="text-dark d-block small">Phase 3: Digital Prescription Delivery</strong>
+                    {% if prescriptions %}
+                        <span class="text-success small fw-medium"><i class="bi bi-patch-check-fill me-1"></i> {{ prescriptions|length }} received</span>
+                    {% else %}
+                        <span class="text-muted small">Awaiting physician diagnostic evaluation upload</span>
+                    {% endif %}
+                </div>
+                <div class="timeline-item" style="padding-bottom: 0;">
+                    <strong class="text-dark d-block small">Phase 4: Pharmacy Dispense</strong>
+                    <span class="text-muted small">Prescribed topical items inventory release</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

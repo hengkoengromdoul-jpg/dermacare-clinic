@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DermaCare | Register</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --primary: #0f63b6;
+            --primary-hover: #0b4d8f;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --bg-body: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            --input-border: #cbd5e1;
+            --input-bg: #f8fafc;
+        }
+
+        body.register-bg {
+            background: var(--bg-body);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+            color: var(--text-main);
+        }
+
+        .register-wrapper { width: 100%; max-width: 650px; }
+
+        .register-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            border: 1px solid #edf2f7;
+            text-align: center;
+        }
+
+        .brand-header h1.clinic-title {
+            color: var(--primary);
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-size: 2.4rem;
+        }
+
+        .brand-header p {
+            color: var(--text-muted);
+            margin: 0 0 30px;
+            font-size: 1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-grid input, .form-grid select {
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+
+        .form-grid input:focus, .form-grid select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(15, 99, 182, 0.1);
+        }
+
+        .full-width-field {
+            grid-column: span 2;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .btn-register {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(15, 99, 182, 0.15);
+        }
+
+        .btn-register:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .login-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .login-link a:hover { text-decoration: underline; }
+
+        .alert-error-box {
+            background-color: #fadbd8;
+            color: #78281f;
+            padding: 14px 20px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* notice box explaining staff registration */
+        .staff-notice {
+            background: #fef9e7;
+            border: 1px solid #624ee1;
+            color: #6086de;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            text-align: left;
+            margin-top: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .staff-notice i {
+            color: #b7950b;
+            font-size: 1.1rem;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body class="register-bg">
+
+<div class="register-wrapper">
+    <div class="register-card">
+        <div class="brand-header">
+            <h1 class="clinic-title">DermaCare</h1>
+            <p>Patient registration — create your skin clinic account</p>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert-error-box">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/register" class="register-form" autocomplete="off">
+            <!-- role is locked to 'patient' — only patients can self-register -->
+            <input type="hidden" name="role" value="patient">
+
+            <div class="form-grid">
+                <input type="text" name="name" placeholder="Full Name" autocomplete="off" required>
+                <input type="email" name="email" placeholder="Email Address" autocomplete="off" required>
+
+                <input type="password" name="password" placeholder="Password" autocomplete="new-password" required>
+                <input type="text" name="phone" placeholder="Phone Number" autocomplete="off" required>
+
+                <input type="text" name="national" placeholder="Nationality" autocomplete="off" required>
+
+                <select name="gender" required>
+                    <option value="" disabled selected>Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-register" style="margin-top: 25px;">
+                <i class="bi bi-person-plus-fill me-1"></i> Join as Patient
+            </button>
+        </form>
+
+        <!-- notice for staff -->
+        <div class="staff-notice">
+            <i class="bi bi-shield-lock-fill"></i>
+            <div>
+                <strong>For Guest only</strong><br>
+            </div>
+        </div>
+
+        <p class="login-link" style="margin-top: 25px; color: var(--text-muted); font-size: 0.95rem;">
+            Already have an account? <a href="/login">Login here</a>
+        </p>
+    </div>
+</div>
+
+</body>
+</html>
