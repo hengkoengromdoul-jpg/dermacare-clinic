@@ -908,60 +908,87 @@ from datetime import datetime
 @app.route('/admin/create_staff', methods=['GET', 'POST'])
 def admin_create_staff():
     if request.method == 'POST':
-        # 1. Capture the exact input names from your Bootstrap HTML form
-        input_name = request.form.get('name')          # matched from name="name"
-        email = request.form.get('email')              # matched from name="email"
-        plain_password = request.form.get('password')  # matched from name="password"
-        role = request.form.get('role')                # matched from name="role" (doctor/pharmacist)
-        national = request.form.get('national', 'Cambodian') 
-        profile_text = request.form.get('profile', '')
-        
-        # Capture these extra fields safely in case you add them to your DB layout later
-        phone = request.form.get('phone')
+        # 1. Capture the exact values sent by your Bootstrap HTML form
+        input_name = request.form.get('name')          # e.g., Dr. Sok Somnang
+        email = request.form.get('email')              # e.g., somnang@dermacare.com
+        plain_password = request.form.get('password')  # Temporary password
+        role = request.form.get('role')                # 'doctor' or 'pharmacist'
         gender = request.form.get('gender')
-        specialization = request.form.get('specialization', '')
+        phone = request.form.get('phone')
+        national = request.form.get('national', 'Cambodian')
+        specialization = request.form.get('specialization', 'dermatology')
+        profile_text = request.form.get('profile', '')
 
-        # Append specialization info to the profile bio column text so we don't lose it!
-        if specialization:
-            final_profile = f"Specialization: {specialization}. Bio: {profile_text}"
-        else:
-            final_profile = profile_text
-
-        # 2. Convert plain text password into the premium "scrypt" security hash
+        # 2. Hash the password for secure storage
         hashed_password = generate_password_hash(plain_password)
         current_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        try:
-            db = get_db()
-            cursor = db.cursor()
+        db = get_db()
+        cursor = db.cursor()
 
-            # 3. Insert query mapping to your exact active column structure
-            # (user_name, password, email, role, status, create_time, profile, national)
-            query = """
-                INSERT INTO users (user_name, password, email, role, status, create_time, profile, national) 
+        try:
+            # ─── STEP A: Insert into the core 'user' table ───
+            user_query = """
+                INSERT INTO user (user_name, password, email, role, status, create_time, profile, national)
                 VALUES (%s, %s, %s, %s, 'active', %s, %s, %s)
             """
-            
-            cursor.execute(query, (
+            cursor.execute(user_query, (
                 input_name, 
                 hashed_password, 
                 email, 
                 role, 
                 current_now, 
-                final_profile, 
+                profile_text, 
                 national
             ))
+            
+            # Get the newly created user_id from the auto_increment column
+            new_user_id = cursor.lastrowid
 
+            # ─── STEP B: Insert detailed data into the corresponding role table ───
+            if role == 'doctor':
+                doctor_query = """
+                    INSERT INTO doctor (user_id, name, gender, phone, email, profile, national, specialization)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(doctor_query, (
+                    new_user_id, 
+                    input_name, 
+                    gender, 
+                    phone, 
+                    email, 
+                    profile_text, 
+                    national, 
+                    specialization
+                ))
+            elif role == 'pharmacist':
+                pharmacist_query = """
+                    INSERT INTO pharmacist (user_id, name, gender, phone, email, profile, national)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(pharmacist_query, (
+                    new_user_id, 
+                    input_name, 
+                    gender, 
+                    phone, 
+                    email, 
+                    profile_text, 
+                    national
+                ))
+
+            # ─── STEP C: Commit the transaction changes safely together ───
             db.commit()
-            cursor.close()
-            db.close()
-
-            flash("Staff account created successfully!")
+            flash(f"Successfully registered new {role} account for {input_name}!")
             return redirect(url_for('admin_create_staff'))
 
         except Exception as e:
-            print(f"CRITICAL SYSTEM ERROR: {e}")
-            return f"Database Query Execution Failed: {e}", 500
+            db.rollback()  # Reverse any partial additions if an error happens
+            print(f"CRITICAL REGISTRATION FAILURE: {e}")
+            return f"Database Transaction Error: {e}", 500
+            
+        finally:
+            cursor.close()
+            db.close()
 
     return render_template('Admin_create_staff.html')
 
