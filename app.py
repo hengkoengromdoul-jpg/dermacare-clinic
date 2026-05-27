@@ -1,19 +1,27 @@
+import os
 import mysql.connector
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 app = Flask(__name__)
-app.secret_key = "dermacare_secure_key"
+app.secret_key = os.environ.get("SECRET_KEY", "dermacare_secure_key")
 
 
 #  DB CONNECTION 
 def get_db():
     return mysql.connector.connect(
-        host="127.0.0.1",
-        user="root",
-        password="Romdoul",
-        database="dermacare"
+        host=os.environ.get("DB_HOST", "127.0.0.1"),
+        port=int(os.environ.get("DB_PORT", "3306")),
+        user=os.environ.get("DB_USER", "root"),
+        password=os.environ.get("DB_PASSWORD", "Romdoul"),
+        database=os.environ.get("DB_NAME", "dermacare")
     )
 
 
