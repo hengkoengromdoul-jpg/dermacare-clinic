@@ -902,92 +902,94 @@ def admin_approve_payment(appointment_id):
 
 # ADMIN CREATE STAFF (doctor / pharmacist)
 
-@app.route("/admin/create_staff", methods=["GET", "POST"])
+from werkzeug.security import generate_password_hash
+from datetime import datetime
+
+@app.route('/admin/create_staff', methods=['GET', 'POST'])
 def admin_create_staff():
-    if "user_id" not in session or session.get("role") != "admin":
-        flash("Admin access only.")
-        return redirect(url_for("login"))
+    if request.method == 'POST':
+        # 1. Capture the exact input names from your Bootstrap HTML form
+        input_name = request.form.get('name')          # matched from name="name"
+        email = request.form.get('email')              # matched from name="email"
+        plain_password = request.form.get('password')  # matched from name="password"
+        role = request.form.get('role')                # matched from name="role" (doctor/pharmacist)
+        national = request.form.get('national', 'Cambodian') 
+        profile_text = request.form.get('profile', '')
+        
+        # Capture these extra fields safely in case you add them to your DB layout later
+        phone = request.form.get('phone')
+        gender = request.form.get('gender')
+        specialization = request.form.get('specialization', '')
 
-    if request.method == "POST":
-        role = request.form.get("role")  # 'doctor' or 'pharmacist'
-        name = request.form.get("name")
-        email = request.form.get("email", "").strip()
-        password = request.form.get("password")
-        phone = request.form.get("phone")
-        gender = request.form.get("gender")
-        national = request.form.get("national") or "Cambodian"
-        profile = request.form.get("profile") or ""
-        specialization = request.form.get("specialization") or "Dermatology"
+        # Append specialization info to the profile bio column text so we don't lose it!
+        if specialization:
+            final_profile = f"Specialization: {specialization}. Bio: {profile_text}"
+        else:
+            final_profile = profile_text
 
-        if role not in ("doctor", "pharmacist"):
-            flash("Invalid role.")
-            return redirect(url_for("admin_create_staff"))
-
-        hashed_password = generate_password_hash(password)
-        db = get_db()
-        cursor = db.cursor()
+        # 2. Convert plain text password into the premium "scrypt" security hash
+        hashed_password = generate_password_hash(plain_password)
+        current_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         try:
-            # create user row
-            cursor.execute("""
-                INSERT INTO user (user_name, password, email, role, status, profile, national)
-                VALUES (%s, %s, %s, %s, 'active', %s, %s)
-            """, (name, hashed_password, email, role, profile, national))
-            user_id = cursor.lastrowid
+            db = get_db()
+            cursor = db.cursor()
 
-            # create role-specific row
-            if role == "doctor":
-                cursor.execute("""
-                    INSERT INTO doctor (user_id, name, gender, phone, email, profile, national, specialization)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (user_id, name, gender, phone, email, profile, national, specialization))
-            else:  # pharmacist
-                cursor.execute("""
-                    INSERT INTO pharmacist (user_id, name, gender, phone, email, profile, national)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, (user_id, name, gender, phone, email, profile, national))
+            # 3. Insert query mapping to your exact active column structure
+            # (user_name, password, email, role, status, create_time, profile, national)
+            query = """
+                INSERT INTO users (user_name, password, email, role, status, create_time, profile, national) 
+                VALUES (%s, %s, %s, %s, 'active', %s, %s, %s)
+            """
+            
+            cursor.execute(query, (
+                input_name, 
+                hashed_password, 
+                email, 
+                role, 
+                current_now, 
+                final_profile, 
+                national
+            ))
 
             db.commit()
-            log_action(session["user_id"], "CREATE_STAFF", f"Admin created {role} account: {name}")
-            flash(f"{role.capitalize()} account created successfully! They can now log in with their email and password.", "success")
-
-        except Exception as e:
-            db.rollback()
-            print(f"CREATE STAFF ERROR: {e}")
-            flash("Could not create account. Email might already exist.")
-        finally:
             cursor.close()
             db.close()
 
-        return redirect(url_for("admin_create_staff"))
+            flash("Staff account created successfully!")
+            return redirect(url_for('admin_create_staff'))
 
-    return render_template("admin_create_staff.html")
+        except Exception as e:
+            print(f"CRITICAL SYSTEM ERROR: {e}")
+            return f"Database Query Execution Failed: {e}", 500
+
+    return render_template('Admin_create_staff.html')
 
 
 # creates admin@dermacare.com / admin123
-@app.route("/setup_admin_one_time")
-def setup_admin_one_time():
-    db = get_db()
-    cursor = db.cursor()
-    try:
-        hashed = generate_password_hash("admin123")
-        cursor.execute("""
-            INSERT INTO user (user_name, password, email, role, status, profile, national)
-            VALUES ('Super Admin', %s, 'admin@dermacare.com', 'admin', 'active', 'system administrator', 'Cambodian')
-        """, (hashed,))
-        user_id = cursor.lastrowid
-        cursor.execute("""
-            INSERT INTO admin (user_id, name, email, phone)
-            VALUES (%s, 'Super Admin', 'admin@dermacare.com', '012-000-000')
-        """, (user_id,))
-        db.commit()
-        return "admin created! login: admin@dermacare.com / admin123<br><strong style='color:red'>NOW DELETE THIS ROUTE FROM app.py</strong>"
-    except Exception as e:
-        db.rollback()
-        return f"error: {e}"
-    finally:
-        cursor.close()
-        db.close()
+# @app.route("/setup_admin_one_time")
+# def setup_admin_one_time():
+#     db = get_db()
+#     cursor = db.cursor()
+#     try:
+#         hashed = generate_password_hash("admin123")
+#         cursor.execute("""
+#             INSERT INTO user (user_name, password, email, role, status, profile, national)
+#             VALUES ('Super Admin', %s, 'admin@dermacare.com', 'admin', 'active', 'system administrator', 'Cambodian')
+#         """, (hashed,))
+#         user_id = cursor.lastrowid
+#         cursor.execute("""
+#             INSERT INTO admin (user_id, name, email, phone)
+#             VALUES (%s, 'Super Admin', 'admin@dermacare.com', '012-000-000')
+#         """, (user_id,))
+#         db.commit()
+#         return "admin created! login: admin@dermacare.com / admin123<br><strong style='color:red'>NOW DELETE THIS ROUTE FROM app.py</strong>"
+#     except Exception as e:
+#         db.rollback()
+#         return f"error: {e}"
+#     finally:
+#         cursor.close()
+#         db.close()
 
 
 if __name__ == "__main__":
