@@ -10,11 +10,10 @@ app.secret_key = "dermacare_secure_key"
 #  DB CONNECTION 
 def get_db():
     return mysql.connector.connect(
-        host=os.environ.get('DB_HOST', '127.0.0.1'),
-        port=int(os.environ.get('DB_PORT', 3306)),
-        user=os.environ.get('DB_USER', 'root'),
-        password=os.environ.get('DB_PASSWORD', 'Romdoul'),
-        database=os.environ.get('DB_NAME', 'dermacare')
+        host="127.0.0.1",
+        user="root",
+        password="Romdoul",
+        database="dermacare"
     )
 
 
@@ -51,7 +50,6 @@ def home():
     cursor.close()
     db.close()
     return render_template("index.html", schedules=schedules)
-
 
 # REGISTER 
 @app.route("/register", methods=["GET", "POST"])
@@ -283,7 +281,7 @@ def confirm_booking():
     cursor = db.cursor(dictionary=True)
 
     try:
-        # 1. find slot
+        # find slot
         cursor.execute(
             "SELECT available_date, start_time FROM schedule WHERE schedule_id = %s",
             (schedule_id,)
@@ -295,7 +293,7 @@ def confirm_booking():
 
         appt_dt = f"{slot['available_date']} {slot['start_time']}"
 
-        # 2. upsert patient record
+        # upsert patient record
         cursor.execute("SELECT patient_id FROM patient WHERE user_id = %s", (user_id,))
         existing = cursor.fetchone()
 
@@ -320,36 +318,36 @@ def confirm_booking():
                   date_of_birth, combined_address, emergency_contact, medical_history))
             patient_id = cursor.lastrowid
 
-        # 3. mark slot as booked
+        # mark slot as booked
         cursor.execute(
             "UPDATE schedule SET status='booked' WHERE schedule_id=%s",
             (schedule_id,)
         )
 
-        # 4. create appointment
+        # create appointment
         cursor.execute("""
             INSERT INTO appointment
                 (doctor_id, patient_id, schedule_id, appointment_date_time,
                  status, booking_fee, booking_type)
-            VALUES (%s, %s, %s, %s, 'confirmed', 18.00, 'online')
+            VALUES (%s, %s, %s, %s, 'pending', 22.00, 'online')
         """, (doctor_id, patient_id, schedule_id, appt_dt))
         appointment_id = cursor.lastrowid
 
-        # 5. auto-create invoice + pending payment
+        # auto-create invoice + pending payment
         cursor.execute("""
             INSERT INTO invoice (appointment_id, invoice_type, total_amount)
-            VALUES (%s, 'consultation', 18.00)
+            VALUES (%s, 'consultation', 22.00)
         """, (appointment_id,))
         invoice_id = cursor.lastrowid
 
         cursor.execute("""
             INSERT INTO payment (invoice_id, payment_method, amount, status)
-            VALUES (%s, 'cash', 18.00, 'pending')
+            VALUES (%s, 'bakong', 22.00, 'pending')
         """, (invoice_id,))
 
         db.commit()
         log_action(user_id, "BOOK_APPOINTMENT", f"Booked appointment #{appointment_id}")
-        flash("Booking confirmed! Please pay $18 at the clinic on your visit.", "success")
+        flash("Booking created! Please complete payment to confirm.", "success")
 
     except Exception as e:
         db.rollback()
@@ -362,18 +360,17 @@ def confirm_booking():
     return redirect(url_for("patient_dashboard"))
 
 
-# VIEW INVOICE (read-only — patient pays at clinic)
-@app.route("/view_invoice/<int:invoice_id>")
-def view_invoice(invoice_id):
+# PAYMENT — QR code page (patient scans and clicks "I have paid")
+@app.route("/pay/<int:invoice_id>")
+def pay(invoice_id):
     if "user_id" not in session or session.get("role") != "patient":
         flash("Please log in as a patient.")
         return redirect(url_for("login"))
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
-
     cursor.execute("""
-        SELECT i.invoice_id, i.invoice_type, i.total_amount, i.invoice_date_time,
+        SELECT i.invoice_id, i.total_amount, i.invoice_type,
                a.appointment_date_time,
                d.name AS doctor_name,
                pay.status AS payment_status
@@ -384,7 +381,6 @@ def view_invoice(invoice_id):
         WHERE i.invoice_id = %s
     """, (invoice_id,))
     invoice = cursor.fetchone()
-
     cursor.close()
     db.close()
 
@@ -392,7 +388,36 @@ def view_invoice(invoice_id):
         flash("Invoice not found.")
         return redirect(url_for("patient_dashboard"))
 
-    return render_template("invoice.html", invoice=invoice)
+    qr_payload = f"KHQR-DERMACARE-INV{invoice_id}-USD{invoice['total_amount']}"
+    return render_template("payment.html", invoice=invoice, qr_payload=qr_payload)
+
+
+# patient confirms they paid — payment becomes 'paid', waits for admin approval
+@app.route("/mark_paid/<int:invoice_id>", methods=["POST"])
+def mark_paid(invoice_id):
+    if "user_id" not in session or session.get("role") != "patient":
+        return redirect(url_for("login"))
+
+    db = get_db()
+    cursor = db.cursor()
+    try:
+        ref = f"KHQR{invoice_id}{datetime.now().strftime('%H%M%S')}"
+        cursor.execute("""
+            UPDATE payment
+            SET status='paid', payment_method='bakong', transaction_ref=%s, payment_date_time=NOW()
+            WHERE invoice_id=%s
+        """, (ref, invoice_id))
+        db.commit()
+        log_action(session["user_id"], "PAYMENT_SENT", f"Paid invoice #{invoice_id} via QR")
+        flash("Payment received! Waiting for the clinic to confirm your booking.", "success")
+    except Exception as e:
+        db.rollback()
+        print(f"MARK PAID ERROR: {e}")
+        flash("Payment could not be recorded.")
+    finally:
+        cursor.close()
+        db.close()
+    return redirect(url_for("patient_dashboard"))
 
 
 # DOCTOR ROUTES
@@ -439,12 +464,17 @@ def doctor_dashboard():
     """, (did,))
     bookings = cursor.fetchall()
 
+    # medicine inventory (so doctor can pick from real medicines with prices)
+    cursor.execute("SELECT medicine_id, medicine_name, medicine_type, price FROM medicine ORDER BY medicine_name")
+    medicines = cursor.fetchall()
+
     cursor.close()
     db.close()
     return render_template("doctor_dashboard.html",
                            doctor=doctor,
                            schedules=schedules,
-                           bookings=bookings)
+                           bookings=bookings,
+                           medicines=medicines)
 
 
 @app.route("/add_schedule", methods=["POST"])
@@ -546,7 +576,8 @@ def complete_appointment(appointment_id):
         """, (appointment_id, appt["doctor_id"], appt["patient_id"], diagnosis, notes))
         prescription_id = cursor.lastrowid
 
-        # attach each medicine
+        # attach each medicine and track total medicine cost
+        medicine_total = 0.0
         for name, dose, qty, ins in zip(med_names, med_dosages, med_qtys, med_instr):
             if name and name.strip():
                 try:
@@ -554,20 +585,25 @@ def complete_appointment(appointment_id):
                 except ValueError:
                     qty_int = 1
 
-                # find existing medicine OR create new one in inventory
+                # find existing medicine (with its price) OR create a new one
                 cursor.execute(
-                    "SELECT medicine_id FROM medicine WHERE medicine_name=%s LIMIT 1",
+                    "SELECT medicine_id, price FROM medicine WHERE medicine_name=%s LIMIT 1",
                     (name.strip(),)
                 )
                 med = cursor.fetchone()
                 if med:
                     medicine_id = med["medicine_id"]
+                    med_price = float(med["price"])
                 else:
                     cursor.execute("""
                         INSERT INTO medicine (medicine_name, medicine_type, price, stock_quantity)
                         VALUES (%s, 'topical', 0.00, 0)
                     """, (name.strip(),))
                     medicine_id = cursor.lastrowid
+                    med_price = 0.0
+
+                # add this medicine's cost (price x quantity) to the running total
+                medicine_total += med_price * qty_int
 
                 # link medicine to prescription
                 cursor.execute("""
@@ -576,10 +612,12 @@ def complete_appointment(appointment_id):
                     VALUES (%s, %s, %s, %s, 'not_bought')
                 """, (prescription_id, medicine_id, qty_int, ins))
 
+        # the pharmacist collects medicine payment separately when dispensing.
+
         db.commit()
         log_action(session["user_id"], "COMPLETE_APPOINTMENT",
-                   f"Completed appointment #{appointment_id} + wrote prescription")
-        flash("Consultation completed and prescription saved!", "success")
+                   f"Completed appointment #{appointment_id} + wrote prescription (medicine ${medicine_total:.2f})")
+        flash(f"Consultation completed! Prescription saved. Patient pays ${medicine_total:.2f} for medicine at the pharmacy.", "success")
 
     except Exception as e:
         db.rollback()
@@ -639,9 +677,12 @@ def pharmacist_dashboard():
 
 @app.route("/dispense/<int:prescription_id>", methods=["POST"])
 def dispense(prescription_id):
-    """Mark a whole prescription as dispensed."""
+    """Pharmacist dispenses medicine AND collects payment for it."""
     if "user_id" not in session or session.get("role") != "pharmacist":
         return redirect(url_for("login"))
+
+    payment_method = request.form.get("payment_method", "cash")
+
     db = get_db()
     cursor = db.cursor(dictionary=True)
     try:
@@ -649,23 +690,52 @@ def dispense(prescription_id):
         ph = cursor.fetchone()
         pharmacist_id = ph["pharmacist_id"] if ph else None
 
-        # update prescription status
+        # get the prescription's appointment + calculate total medicine cost
+        cursor.execute("""
+            SELECT pr.appointment_id,
+                   COALESCE(SUM(m.price * pm.quantity), 0) AS medicine_total
+            FROM prescription pr
+            JOIN prescription_medicine pm ON pm.prescription_id = pr.prescription_id
+            JOIN medicine m ON m.medicine_id = pm.medicine_id
+            WHERE pr.prescription_id = %s
+            GROUP BY pr.appointment_id
+        """, (prescription_id,))
+        info = cursor.fetchone()
+        appointment_id = info["appointment_id"] if info else None
+        medicine_total = float(info["medicine_total"]) if info else 0.0
+
+        # mark prescription dispensed
         cursor.execute("""
             UPDATE prescription
             SET status='dispensed', pharmacist_id=%s, dispensed_at=NOW()
             WHERE prescription_id=%s
         """, (pharmacist_id, prescription_id))
 
-        # mark all the medicines in this prescription as bought
+        # mark all medicines as bought
         cursor.execute("""
             UPDATE prescription_medicine
             SET purchase_status='bought'
             WHERE prescription_id=%s
         """, (prescription_id,))
 
+        # create a medicine invoice + payment (so patient pays for medicine here)
+        if medicine_total > 0 and appointment_id:
+            cursor.execute("""
+                INSERT INTO invoice (appointment_id, invoice_type, total_amount)
+                VALUES (%s, 'medicine', %s)
+            """, (appointment_id, medicine_total))
+            med_invoice_id = cursor.lastrowid
+
+            ref = f"MED{prescription_id}{datetime.now().strftime('%H%M%S')}"
+            cursor.execute("""
+                INSERT INTO payment (invoice_id, payment_method, amount, status, transaction_ref)
+                VALUES (%s, %s, %s, 'paid', %s)
+            """, (med_invoice_id, payment_method, medicine_total, ref))
+
         db.commit()
-        log_action(session["user_id"], "DISPENSE", f"Dispensed prescription #{prescription_id}")
-        flash("Prescription marked as dispensed.", "success")
+        log_action(session["user_id"], "DISPENSE",
+                   f"Dispensed prescription #{prescription_id}, collected ${medicine_total:.2f} via {payment_method}")
+        flash(f"Medicine dispensed! Collected ${medicine_total:.2f} via {payment_method}.", "success")
     except Exception as e:
         db.rollback()
         print(f"DISPENSE ERROR: {e}")
@@ -795,10 +865,34 @@ def admin_toggle_user(user_id):
     db.close()
     return redirect(url_for("admin_dashboard"))
 
-# =============================================================
-# ADMIN — CREATE STAFF (doctor / pharmacist)
-# Paste this into app.py, just below the admin_toggle_user route
-# =============================================================
+
+# ADMIN — APPROVE PAYMENT → confirms the booking
+@app.route("/admin/approve_payment/<int:appointment_id>")
+def admin_approve_payment(appointment_id):
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
+    db = get_db()
+    cursor = db.cursor()
+    try:
+        # confirm the appointment
+        cursor.execute(
+            "UPDATE appointment SET status='confirmed' WHERE appointment_id=%s",
+            (appointment_id,)
+        )
+        db.commit()
+        log_action(session["user_id"], "APPROVE_PAYMENT",
+                   f"Approved payment & confirmed appointment #{appointment_id}")
+        flash("Payment approved — booking is now confirmed!", "success")
+    except Exception as e:
+        db.rollback()
+        print(f"APPROVE PAYMENT ERROR: {e}")
+        flash("Could not approve payment.")
+    finally:
+        cursor.close()
+        db.close()
+    return redirect(url_for("admin_dashboard"))
+
+# ADMIN CREATE STAFF (doctor / pharmacist)
 
 @app.route("/admin/create_staff", methods=["GET", "POST"])
 def admin_create_staff():
@@ -826,14 +920,14 @@ def admin_create_staff():
         cursor = db.cursor()
 
         try:
-            # 1. create user row
+            # create user row
             cursor.execute("""
                 INSERT INTO user (user_name, password, email, role, status, profile, national)
                 VALUES (%s, %s, %s, %s, 'active', %s, %s)
             """, (name, hashed_password, email, role, profile, national))
             user_id = cursor.lastrowid
 
-            # 2. create role-specific row
+            # create role-specific row
             if role == "doctor":
                 cursor.execute("""
                     INSERT INTO doctor (user_id, name, gender, phone, email, profile, national, specialization)
@@ -860,6 +954,33 @@ def admin_create_staff():
         return redirect(url_for("admin_create_staff"))
 
     return render_template("admin_create_staff.html")
+
+
+# creates admin@dermacare.com / admin123
+@app.route("/setup_admin_one_time")
+def setup_admin_one_time():
+    db = get_db()
+    cursor = db.cursor()
+    try:
+        hashed = generate_password_hash("admin123")
+        cursor.execute("""
+            INSERT INTO user (user_name, password, email, role, status, profile, national)
+            VALUES ('Super Admin', %s, 'admin@dermacare.com', 'admin', 'active', 'system administrator', 'Cambodian')
+        """, (hashed,))
+        user_id = cursor.lastrowid
+        cursor.execute("""
+            INSERT INTO admin (user_id, name, email, phone)
+            VALUES (%s, 'Super Admin', 'admin@dermacare.com', '012-000-000')
+        """, (user_id,))
+        db.commit()
+        return "admin created! login: admin@dermacare.com / admin123<br><strong style='color:red'>NOW DELETE THIS ROUTE FROM app.py</strong>"
+    except Exception as e:
+        db.rollback()
+        return f"error: {e}"
+    finally:
+        cursor.close()
+        db.close()
+
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -227,7 +227,8 @@
                             <th>Date</th>
                             <th>Fee</th>
                             <th>Status</th>
-                            <th class="pe-4">Payment</th>
+                            <th>Payment</th>
+                            <th class="pe-4">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -249,7 +250,7 @@
                                 <span class="badge bg-secondary">{{ a.status|capitalize }}</span>
                             {% endif %}
                         </td>
-                        <td class="pe-4">
+                        <td>
                             {% if a.payment_status == 'paid' %}
                                 <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Paid</span>
                             {% elif a.payment_status == 'pending' %}
@@ -258,10 +259,22 @@
                                 <span class="badge bg-secondary">—</span>
                             {% endif %}
                         </td>
+                        <td class="pe-4">
+                            {% if a.payment_status == 'paid' and a.status == 'pending' %}
+                                <a href="{{ url_for('admin_approve_payment', appointment_id=a.appointment_id) }}"
+                                   class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                                    <i class="bi bi-check2-circle me-1"></i>Approve
+                                </a>
+                            {% elif a.status == 'confirmed' %}
+                                <span class="text-success small"><i class="bi bi-check-all"></i> Confirmed</span>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">No appointments yet.</td>
+                        <td colspan="8" class="text-center text-muted py-4">No appointments yet.</td>
                     </tr>
                     {% endfor %}
                     </tbody>

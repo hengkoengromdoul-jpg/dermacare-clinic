@@ -50,7 +50,7 @@ body {
     opacity: 0.9;
 }
 
-/* --- FEATURES & SERVICES --- */
+/*FEATURES & SERVICES */
 .feature-box {
     padding: 20px;
     margin-bottom: 30px;
@@ -70,7 +70,7 @@ body {
     margin: 0 auto 15px auto;
 }
 
-/* --- CONTACT & PILL BUTTONS --- */
+/*CONTACT & PILL BUTTONS*/
 .btn-contact-pill-sm {
     background-color: #3498db;
     color: white !important;
@@ -119,7 +119,7 @@ body {
     background-color: #9dd0fa !important;
 }
 
-/* --- FOOTER / CTA --- */
+/* FOOTER / CTA */
 .cta {
     background: #2c3e50;
     color: white;
@@ -253,3 +253,220 @@ body {
 .glass-box:hover {
     transform: translateY(-5px);
 }
+
+/* Features Section Styling */
+.feature-col {
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 35px 28px;
+    height: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.feature-col:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(52, 152, 219, 0.12);
+}
+
+.feature-col-highlight {
+    background: #ffffff;
+    box-shadow: 0 15px 40px rgba(52, 152, 219, 0.15);
+    border: 1px solid #e6f1fb;
+}
+.feature-icon {
+    font-size: 3.5rem;
+    color: #dce7ef;
+    line-height: 1;
+}
+.feature-divider {
+    width: 60px;
+    margin: 20px auto;
+    border-top: 2px solid #e2e8f0;
+}
+.feature-list {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+    max-width: 260px;
+    margin: 0 auto;
+}
+.feature-list li {
+    position: relative;
+    padding-left: 24px;
+    margin-bottom: 12px;
+    color: #555;
+    font-size: 0.95rem;
+}
+.feature-list li::before {
+    content: '\F285';  /* bootstrap-icons chevron-right */
+    font-family: 'bootstrap-icons';
+    position: absolute;
+    left: 0;
+    top: 1px;
+    color: #e5edf3;
+    font-size: 0.85rem;
+}
+
+   /* Custom Luxury Layout Styling */
+    .derma-wrapper {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        font-family: 'Poppins', 'Segoe UI', sans-serif;
+    }
+    
+    /* Creative Section Titles with Gradient Left Bars */
+    .derma-header-block {
+        margin: 60px 0 35px 0;
+        position: relative;
+        padding-left: 15px;
+    }
+    .derma-header-block::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 15%;
+        height: 70%;
+        width: 5px;
+        background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        border-radius: 10px;
+    }
+    .derma-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 8px 0;
+        letter-spacing: -0.5px;
+    }
+    .derma-subtitle {
+        color: #64748b;
+        font-size: 16px;
+        margin: 0;
+    }
+
+    /* Grid Layout */
+    .derma-premium-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 30px;
+    }
+
+    /* Card Item Box */
+    .derma-luxury-card {
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid rgba(241, 245, 249, 0.9);
+        border-radius: 24px;
+        padding: 40px 25px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.02);
+    }
+    .derma-luxury-card:hover {
+        transform: translateY(-10px);
+        background: #ffffff;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+    }
+
+    /* Card Typography */
+    .derma-headline-text {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0 0 10px 0;
+        transition: color 0.3s ease;
+    }
+    .derma-card-desc {
+        font-size: 13px;
+        color: #94a3b8;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Base Circle Frame Configuration */
+    .derma-avatar-frame {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 25px auto;
+        position: relative;
+        z-index: 2;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .derma-avatar-frame i {
+        font-size: 34px;
+        transition: all 0.4s ease;
+    }
+
+    /* --- THEME 1: COMMON SERVICES (Sleek Blue) --- */
+    .bg-services {
+        background: linear-gradient(135deg, #f0f6ff, #e0f2fe);
+    }
+    .bg-services i {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .card-services:hover .bg-services {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
+    }
+    .card-services:hover .derma-headline-text {
+        color: #2563eb;
+    }
+    .card-services:hover {
+        border-color: rgba(37, 99, 235, 0.2);
+    }
+
+    /* --- THEME 2: TOP SPECIALTIES (Healing Teal/Green) --- */
+    .bg-specialties {
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    }
+    .bg-specialties i {
+        background: linear-gradient(135deg, #16a34a, #10b981);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .card-specialties:hover .bg-specialties {
+        background: linear-gradient(135deg, #16a34a, #10b981);
+        box-shadow: 0 10px 20px rgba(22, 163, 74, 0.25);
+    }
+    .card-specialties:hover .derma-headline-text {
+        color: #16a34a;
+    }
+    .card-specialties:hover {
+        border-color: rgba(22, 163, 74, 0.2);
+    }
+
+    /* --- THEME 3: COMMON CONDITIONS (Warm Care Orange) --- */
+    .bg-conditions {
+        background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    }
+    .bg-conditions i {
+        background: linear-gradient(135deg, #ea580c, #f97316);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .card-conditions:hover .bg-conditions {
+        background: linear-gradient(135deg, #ea580c, #f97316);
+        box-shadow: 0 10px 20px rgba(234, 88, 12, 0.25);
+    }
+    .card-conditions:hover .derma-headline-text {
+        color: #ea580c;
+    }
+    .card-conditions:hover {
+        border-color: rgba(234, 88, 12, 0.2);
+    }
+
+    /* Universal Icon Color Change on Card Hover */
+    .derma-luxury-card:hover .derma-avatar-frame i {
+        background: #ffffff !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: white !important;
+    }
+    .derma-luxury-card:hover .derma-avatar-frame {
+        transform: rotate(10deg) scale(1.05);
+    }

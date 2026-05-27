@@ -1,28 +1,25 @@
--- ============================================================================
--- DermaCare Clinic — Final Database Schema
--- ============================================================================
--- this file does TWO things:
---   1. creates all 13 tables
---   2. fills the medicine inventory (no passwords needed)
+
+-- DermaCare clinic database
+-- this file creates all 13 tables and adds 10 medicines.
 --
--- it does NOT create fake user accounts because flask handles password hashing
--- automatically when you register through the /register page.
+-- it does NOT create user accounts here because passwords need to be hashed
+-- by flask. you'll create users through the website instead:
+--   - admin: through the /setup_admin_one_time trick (one time only)
+--   - doctors and pharmacists: admin creates them at /admin/create_staff
+--   - patients: self-register at /register
 --
--- HOW TO USE:
+-- HOW TO RUN:
 --   1. open mysql workbench
 --   2. open this file
 --   3. press the lightning bolt to run everything
---   4. start your flask app:  python app.py
---   5. go to /register and create:  admin, doctor(s), pharmacist(s), patient(s)
---   6. login and use the app normally
--- ============================================================================
+--   4. you should see 13 tables created and 10 medicines inserted
 
 drop database if exists dermacare;
 create database dermacare;
 use dermacare;
 
 
--- ─── 1. user (core login info) ──────────────────────────────────────────────
+-- ─── 1. user 
 create table user (
     user_id     int auto_increment primary key,
     user_name   varchar(100) not null,
@@ -36,7 +33,7 @@ create table user (
 );
 
 
--- ─── 2. admin ───────────────────────────────────────────────────────────────
+-- ─── 2. admin
 create table admin (
     admin_id int auto_increment primary key,
     user_id  int not null,
@@ -47,7 +44,7 @@ create table admin (
 );
 
 
--- ─── 3. patient ─────────────────────────────────────────────────────────────
+-- ─── 3. patient 
 create table patient (
     patient_id        int auto_increment primary key,
     user_id           int not null,
@@ -65,7 +62,7 @@ create table patient (
 );
 
 
--- ─── 4. doctor ──────────────────────────────────────────────────────────────
+-- ─── 4. doctor 
 create table doctor (
     doctor_id        int auto_increment primary key,
     user_id          int not null,
@@ -83,7 +80,7 @@ create table doctor (
 );
 
 
--- ─── 5. pharmacist ──────────────────────────────────────────────────────────
+-- ─── 5. pharmacist
 create table pharmacist (
     pharmacist_id int auto_increment primary key,
     user_id       int not null,
@@ -97,7 +94,7 @@ create table pharmacist (
 );
 
 
--- ─── 6. schedule (doctor's available time slots) ────────────────────────────
+-- ─── 6. schedule 
 create table schedule (
     schedule_id    int auto_increment primary key,
     doctor_id      int not null,
@@ -109,7 +106,7 @@ create table schedule (
 );
 
 
--- ─── 7. appointment ─────────────────────────────────────────────────────────
+-- ─── 7. appointment 
 create table appointment (
     appointment_id        int auto_increment primary key,
     doctor_id             int not null,
@@ -127,7 +124,7 @@ create table appointment (
 );
 
 
--- ─── 8. medicine ────────────────────────────────────────────────────────────
+-- ─── 8. medicine
 create table medicine (
     medicine_id    int auto_increment primary key,
     medicine_name  varchar(100) not null,
@@ -138,7 +135,7 @@ create table medicine (
 );
 
 
--- ─── 9. prescription ────────────────────────────────────────────────────────
+-- ─── 9. prescription 
 create table prescription (
     prescription_id        int auto_increment primary key,
     patient_id             int not null,
@@ -157,7 +154,7 @@ create table prescription (
 );
 
 
--- ─── 10. prescription_medicine (many-to-many bridge) ────────────────────────
+-- ─── 10. prescription_medicine
 create table prescription_medicine (
     prescription_medicine_id int auto_increment primary key,
     prescription_id int not null,
@@ -170,7 +167,7 @@ create table prescription_medicine (
 );
 
 
--- ─── 11. invoice ────────────────────────────────────────────────────────────
+-- ─── 11. invoice
 create table invoice (
     invoice_id        int auto_increment primary key,
     appointment_id    int not null,
@@ -181,7 +178,7 @@ create table invoice (
 );
 
 
--- ─── 12. payment ────────────────────────────────────────────────────────────
+-- ─── 12. payments
 create table payment (
     payment_id        int auto_increment primary key,
     invoice_id        int not null,
@@ -194,7 +191,7 @@ create table payment (
 );
 
 
--- ─── 13. activity_log (admin audit trail) ───────────────────────────────────
+-- ─── 13. activity_log
 create table activity_log (
     log_id      int auto_increment primary key,
     user_id     int,
@@ -204,12 +201,7 @@ create table activity_log (
     foreign key (user_id) references user(user_id) on delete set null
 );
 
-
--- ============================================================================
--- SEED DATA — only things that don't need passwords
--- ============================================================================
-
--- medicine inventory (pharmacist needs these to be ready)
+-- seed the medicine inventory
 insert into medicine (medicine_name, medicine_type, price, stock_quantity, expiry_date) values
 ('Hydrocortisone Cream',     'topical', 15.50, 100, '2027-12-31'),
 ('Salicylic Acid Cleanser',  'topical', 12.00,  50, '2028-08-15'),
@@ -222,12 +214,18 @@ insert into medicine (medicine_name, medicine_type, price, stock_quantity, expir
 ('Vitamin E Cream',          'topical',  8.50, 120, '2028-07-25'),
 ('Sunscreen SPF50',          'topical', 20.00, 200, '2028-12-31');
 
+-- verification — these queries show that everything work
 
--- ============================================================================
--- VERIFICATION — see that everything was created correctly
--- ============================================================================
-select 'tables created:' as info, count(*) as total from information_schema.tables where table_schema = 'dermacare';
+-- count of tables (should be 13)
+select count(*) as total_tables
+from information_schema.tables
+where table_schema = 'dermacare';
 
--- you should see 13 tables. medicine table should have 10 rows. everything else is empty
--- until you register users through /register.
+-- list all tables
+show tables;
 
+-- check medicine inventory (should be 10 rows)
+select * from medicine;
+
+USE dermacare;
+DELETE FROM user WHERE email = 'admin@dermacare.com';

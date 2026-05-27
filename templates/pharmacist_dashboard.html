@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body style="background:#c4d1e3;">
+<body style="background:#5e99e6;">
 <nav class="navbar navbar-light bg-white shadow-sm px-4">
     <span class="navbar-brand fw-bold text-primary">DermaCare · Pharmacy</span>
     <div>
@@ -43,21 +43,49 @@
             <p><strong>Notes:</strong> {{ pr.notes or '-' }}</p>
 
             <table class="table table-sm">
-                <thead><tr><th>Medicine</th><th>Dosage</th><th>Qty</th><th>Instructions</th></tr></thead>
+                <thead><tr><th>Medicine</th><th>Type</th><th>Qty</th><th>Instructions</th><th class="text-end">Price</th><th class="text-end">Subtotal</th></tr></thead>
                 <tbody>
+                {% set total = namespace(value=0) %}
                 {% for m in pr.medicines %}
                 <tr>
-                    <td>{{ m.name }}</td><td>{{ m.dosage }}</td>
-                    <td>{{ m.quantity }}</td><td>{{ m.instructions }}</td>
+                    <td>{{ m.medicine_name }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ m.medicine_type }}</span></td>
+                    <td>{{ m.quantity }}</td>
+                    <td>{{ m.instruction }}</td>
+                    <td class="text-end">${{ "%.2f"|format(m.price) }}</td>
+                    <td class="text-end fw-bold">${{ "%.2f"|format(m.price * m.quantity) }}</td>
                 </tr>
+                {% set total.value = total.value + (m.price * m.quantity) %}
                 {% endfor %}
                 </tbody>
+                <tfoot>
+                    <tr class="table-light">
+                        <td colspan="5" class="text-end fw-bold">Total Medicine Cost:</td>
+                        <td class="text-end fw-bold text-success">${{ "%.2f"|format(total.value) }}</td>
+                    </tr>
+                </tfoot>
             </table>
+            <p class="text-muted small mb-3">
+                <i class="bi bi-info-circle me-1"></i>
+                Patient pays this amount at the pharmacy counter when collecting medicine.
+            </p>
 
             {% if pr.status != 'dispensed' %}
-            <form method="POST" action="{{ url_for('dispense', prescription_id=pr.prescription_id) }}">
-                <button class="btn btn-success btn-sm">Mark as Dispensed</button>
+            <form method="POST" action="{{ url_for('dispense', prescription_id=pr.prescription_id) }}" class="d-flex gap-2 align-items-center">
+                <label class="small fw-bold mb-0">Patient pays by:</label>
+                <select name="payment_method" class="form-select form-select-sm" style="width:auto;">
+                    <option value="cash">Cash</option>
+                    <option value="aba_pay">ABA Pay</option>
+                    <option value="bakong">Bakong</option>
+                    <option value="wing">Wing</option>
+                    <option value="card">Card</option>
+                </select>
+                <button class="btn btn-success btn-sm">
+                    <i class="bi bi-cash-coin me-1"></i>Collect Payment & Dispense
+                </button>
             </form>
+            {% else %}
+            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Paid & Dispensed</span>
             {% endif %}
         </div>
     </div>
