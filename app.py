@@ -990,7 +990,7 @@ def admin_create_staff():
             cursor.close()
             db.close()
 
-    return render_template('Admin_create_staff.html')
+    return render_template('admin_create_staff.html')
 
 
 # creates admin@dermacare.com / admin123
