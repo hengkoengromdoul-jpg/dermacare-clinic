@@ -21,7 +21,8 @@ def get_db():
         port=int(os.environ.get("DB_PORT", "3306")),
         user=os.environ.get("DB_USER", "root"),
         password=os.environ.get("DB_PASSWORD", "Romdoul"),
-        database=os.environ.get("DB_NAME", "dermacare")
+        database=os.environ.get("DB_NAME", "dermacare"),
+        time_zone='+07:00'
     )
 
 
