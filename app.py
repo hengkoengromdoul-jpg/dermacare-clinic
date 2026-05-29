@@ -428,6 +428,85 @@ def mark_paid(invoice_id):
         db.close()
     return redirect(url_for("patient_dashboard"))
 
+#Receipt
+@app.route("/full_receipt/<int:appointment_id>")
+def full_receipt(appointment_id):
+    """
+    Shows a complete receipt for one visit:
+    - patient info
+    - doctor info
+    - consultation invoice + payment
+    - medicine invoice + payment (if any)
+    - grand total + amount due
+    """
+    if "user_id" not in session:
+        flash("Please log in.")
+        return redirect(url_for("login"))
+ 
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+ 
+    # 1. get the appointment with patient + doctor info
+    cursor.execute("""
+        SELECT a.appointment_id, a.appointment_date_time, a.status, a.booking_fee,
+               p.name AS patient_name, p.phone AS patient_phone,
+               p.email AS patient_email, p.address AS patient_address,
+               d.name AS doctor_name, d.specialization
+        FROM appointment a
+        JOIN patient p ON a.patient_id = p.patient_id
+        JOIN doctor d ON a.doctor_id = d.doctor_id
+        WHERE a.appointment_id = %s
+    """, (appointment_id,))
+    appt = cursor.fetchone()
+ 
+    if not appt:
+        cursor.close()
+        db.close()
+        flash("Appointment not found.")
+        return redirect(url_for("home"))
+ 
+    # 2. get all invoices for this appointment (both consultation + medicine)
+    cursor.execute("""
+        SELECT i.invoice_id, i.invoice_type, i.total_amount, i.invoice_date_time,
+               pay.payment_method, pay.status AS payment_status,
+               pay.transaction_ref, pay.payment_date_time
+        FROM invoice i
+        LEFT JOIN payment pay ON pay.invoice_id = i.invoice_id
+        WHERE i.appointment_id = %s
+        ORDER BY i.invoice_id
+    """, (appointment_id,))
+    invoices = cursor.fetchall()
+ 
+    # 3. get the prescription + medicines (for the medicine breakdown)
+    cursor.execute("""
+        SELECT pr.prescription_id, pr.diagnosis, pr.notes,
+               pm.quantity, pm.instruction,
+               m.medicine_name, m.price,
+               (m.price * pm.quantity) AS line_total
+        FROM prescription pr
+        JOIN prescription_medicine pm ON pm.prescription_id = pr.prescription_id
+        JOIN medicine m ON m.medicine_id = pm.medicine_id
+        WHERE pr.appointment_id = %s
+    """, (appointment_id,))
+    medicines = cursor.fetchall()
+ 
+    # 4. calculate totals
+    grand_total = sum(float(inv["total_amount"]) for inv in invoices)
+    amount_paid = sum(float(inv["total_amount"]) for inv in invoices
+                      if inv["payment_status"] == "paid")
+    amount_due = grand_total - amount_paid
+ 
+    cursor.close()
+    db.close()
+ 
+    return render_template("full_receipt.html",
+                           appt=appt,
+                           invoices=invoices,
+                           medicines=medicines,
+                           grand_total=grand_total,
+                           amount_paid=amount_paid,
+                           amount_due=amount_due)
+ 
 
 # DOCTOR ROUTES
 @app.route("/doctor_dashboard")
