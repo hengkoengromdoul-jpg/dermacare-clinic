@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Full Receipt — DermaCare Clinic</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+        .receipt-box {
+            max-width: 720px; margin: 30px auto; background: #fff;
+            border-radius: 18px; padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        }
+        .clinic-header {
+            text-align: center; border-bottom: 3px solid #3498db;
+            padding-bottom: 20px; margin-bottom: 30px;
+        }
+        .clinic-name { color: #2c3e50; font-weight: 700; font-size: 2rem; margin: 0; }
+        .clinic-tag { color: #3498db; font-size: 1rem; }
+        .section-title {
+            background: #ecf6fd; color: #2c3e50; padding: 10px 16px;
+            border-left: 4px solid #3498db; margin-top: 25px; margin-bottom: 15px;
+            font-weight: 600; border-radius: 4px;
+        }
+        .info-row { display: flex; padding: 6px 0; }
+        .info-label { font-weight: 600; color: #555; min-width: 140px; }
+        .info-value { color: #2c3e50; }
+        table.med-table th { background: #3498db; color: #fff; }
+        table.med-table { border-radius: 8px; overflow: hidden; }
+        .total-row { font-weight: 700; font-size: 1.2rem; }
+        .badge-paid { background: #27ae60; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; }
+        .badge-pending { background: #f39c12; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; }
+        .grand-total-box {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white; padding: 20px; border-radius: 12px;
+            text-align: center; margin-top: 25px;
+        }
+        .grand-total-box h3 { margin: 0; font-size: 2rem; font-weight: 700; }
+        .due-zero { color: #27ae60; font-weight: 700; font-size: 1.5rem; }
+        .due-pending { color: #e74c3c; font-weight: 700; font-size: 1.5rem; }
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            .receipt-box { box-shadow: none; margin: 0; padding: 20px; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-box">
+
+        <!-- Clinic Header -->
+        <div class="clinic-header">
+            <h1 class="clinic-name"><i class="bi bi-heart-pulse-fill text-primary"></i> DermaCare Clinic</h1>
+            <p class="clinic-tag">Professional Dermatology Care · Phnom Penh, Cambodia</p>
+            <small class="text-muted">Receipt #{{ appt.appointment_id }} · Generated: {{ appt.appointment_date_time }}</small>
+        </div>
+
+        <!-- Patient & Doctor Info -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="section-title"><i class="bi bi-person"></i> Patient</div>
+                <div class="info-row"><span class="info-label">Name:</span><span class="info-value">{{ appt.patient_name }}</span></div>
+                <div class="info-row"><span class="info-label">Phone:</span><span class="info-value">{{ appt.patient_phone or "—" }}</span></div>
+                <div class="info-row"><span class="info-label">Email:</span><span class="info-value">{{ appt.patient_email or "—" }}</span></div>
+            </div>
+            <div class="col-md-6">
+                <div class="section-title"><i class="bi bi-clipboard2-pulse"></i> Doctor</div>
+                <div class="info-row"><span class="info-label">Doctor:</span><span class="info-value">Dr. {{ appt.doctor_name }}</span></div>
+                <div class="info-row"><span class="info-label">Specialization:</span><span class="info-value">{{ appt.specialization }}</span></div>
+                <div class="info-row"><span class="info-label">Visit date:</span><span class="info-value">{{ appt.appointment_date_time }}</span></div>
+            </div>
+        </div>
+
+        <!-- Section 1: CONSULTATION -->
+        <div class="section-title"><i class="bi bi-cash-coin"></i> 1. Consultation Fee (Booking)</div>
+        {% set consult_done = false %}
+        {% for inv in invoices %}
+            {% if inv.invoice_type == 'consultation' %}
+                {% set consult_done = true %}
+                <div class="info-row"><span class="info-label">Invoice #:</span><span class="info-value">{{ inv.invoice_id }}</span></div>
+                <div class="info-row"><span class="info-label">Amount:</span><span class="info-value">${{ "%.2f"|format(inv.total_amount) }}</span></div>
+                <div class="info-row"><span class="info-label">Payment method:</span><span class="info-value">{{ (inv.payment_method or "—")|upper }}</span></div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">
+                        {% if inv.payment_status == 'paid' %}
+                            <span class="badge-paid">PAID</span>
+                        {% else %}
+                            <span class="badge-pending">PENDING</span>
+                        {% endif %}
+                    </span>
+                </div>
+                {% if inv.transaction_ref %}
+                    <div class="info-row"><span class="info-label">Transaction:</span><span class="info-value">{{ inv.transaction_ref }}</span></div>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        {% if not consult_done %}
+            <p class="text-muted">No consultation invoice yet.</p>
+        {% endif %}
+
+        <!-- Section 2: MEDICINE -->
+        <div class="section-title"><i class="bi bi-capsule"></i> 2. Medicine</div>
+        {% if medicines %}
+            <table class="table med-table">
+                <thead>
+                    <tr>
+                        <th>Medicine</th>
+                        <th class="text-center">Qty</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Line Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in medicines %}
+                    <tr>
+                        <td>{{ m.medicine_name }}<br><small class="text-muted">{{ m.instruction or "" }}</small></td>
+                        <td class="text-center">{{ m.quantity }}</td>
+                        <td class="text-end">${{ "%.2f"|format(m.price) }}</td>
+                        <td class="text-end"><strong>${{ "%.2f"|format(m.line_total) }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% set med_done = false %}
+            {% for inv in invoices %}
+                {% if inv.invoice_type == 'medicine' %}
+                    {% set med_done = true %}
+                    <div class="info-row"><span class="info-label">Medicine invoice #:</span><span class="info-value">{{ inv.invoice_id }}</span></div>
+                    <div class="info-row"><span class="info-label">Total:</span><span class="info-value">${{ "%.2f"|format(inv.total_amount) }}</span></div>
+                    <div class="info-row"><span class="info-label">Payment method:</span><span class="info-value">{{ (inv.payment_method or "—")|upper }}</span></div>
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value">
+                            {% if inv.payment_status == 'paid' %}
+                                <span class="badge-paid">PAID</span>
+                            {% else %}
+                                <span class="badge-pending">PENDING</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                {% endif %}
+            {% endfor %}
+            {% if not med_done %}
+                <p class="text-muted"><i class="bi bi-info-circle"></i> Medicine not yet dispensed by pharmacist.</p>
+            {% endif %}
+        {% else %}
+            <p class="text-muted">No medicine prescribed for this visit.</p>
+        {% endif %}
+
+        <!-- GRAND TOTAL -->
+        <div class="grand-total-box">
+            <p class="mb-1">GRAND TOTAL FOR THIS VISIT</p>
+            <h3>${{ "%.2f"|format(grand_total) }}</h3>
+            <hr style="border-color: rgba(255,255,255,0.3);">
+            <div class="row">
+                <div class="col-6">
+                    <small>Already Paid</small>
+                    <p class="mb-0" style="font-size: 1.3rem;">${{ "%.2f"|format(amount_paid) }}</p>
+                </div>
+                <div class="col-6">
+                    <small>Amount Due</small>
+                    {% if amount_due <= 0 %}
+                        <p class="mb-0" style="font-size: 1.3rem;">$0.00 ✅</p>
+                    {% else %}
+                        <p class="mb-0" style="font-size: 1.3rem;">${{ "%.2f"|format(amount_due) }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if amount_due <= 0 %}
+            <p class="text-center mt-3 due-zero"><i class="bi bi-check-circle-fill"></i> All payments completed. Thank you!</p>
+        {% else %}
+            <p class="text-center mt-3 due-pending"><i class="bi bi-exclamation-circle-fill"></i> Payment pending: ${{ "%.2f"|format(amount_due) }}</p>
+        {% endif %}
+
+        <!-- footer -->
+        <hr>
+        <p class="text-center text-muted mt-3"><small>DermaCare Clinic · Phnom Penh, Cambodia · contact@dermacare.com</small></p>
+
+        <!-- buttons (hidden on print) -->
+        <div class="no-print text-center mt-4">
+            <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer"></i> Print Receipt</button>
+            <a href="{{ url_for('patient_dashboard') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>
